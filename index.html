@@ -59,7 +59,7 @@
   </svg>
   <div class="lg" id="lg"></div>
 </div>
-<div id="help">Drag to look around · Scroll / pinch to zoom · Keys 1–4 switch levels, [ ] switch views · R resets</div>
+<div id="help">Drag to look around · Scroll / pinch to zoom · Keys 1–5 switch levels, [ ] switch views · R resets</div>
 <div id="hud"></div>
 <script>
 // map pixel = affine(model metres); fitted on the four brief points
@@ -85,6 +85,17 @@ const L=[
  {id:'reference',name:'3 · Reference previews',desc:'AI reference previews from the proposed cameras · mood only',items:PROP.map(p=>({...p,d:p.d+' · reference preview',src:RSRC[p.k],res:R4}))},
  {id:'preview',name:'4 · Panorama previews',desc:'Work-in-progress panorama previews · materials, planting, light',items:[
   {k:'1',n:1,t:'1 · Cottage & wellness hotel',d:'Panorama preview 1 — cottage and wellness hotel',src:'wip/W1',res:['_2k.jpg','_8k.jpg'],xy:[-380,1046],h:268}]}];
+const ALT_ITEMS=[
+ {k:'1a',n:1,t:'1A · Villas, 6 m',d:'Alt 1A — closer to the hotel, eye height 6 m',src:'alt/ALT_V1',xy:[-405,1080],h:260},
+ {k:'1b',n:1,t:'1B · Villas, 12 m',d:'Alt 1B — closer to the hotel, eye height 12 m',src:'alt/ALT_V2',xy:[-405,1080],h:260},
+ {k:'1c',n:1,t:'1C · Villas, 20 m overview',d:'Alt 1C — overview of villas and hotel, 20 m',src:'alt/ALT_V3',xy:[-385,1095],h:265},
+ {k:'2a',n:2,t:'2A · Yacht deck',d:'Alt 2A — upper deck of a 23 m yacht, eye ~8.5 m',src:'alt/ALT_M1',xy:[-260.7,338.1],h:250},
+ {k:'2b',n:2,t:'2B · Yacht deck, basin corner',d:'Alt 2B — yacht upper deck in the basin corner, looking across the marina',src:'alt/ALT_M2',xy:[-231.5,368.5],h:235},
+ {k:'2c',n:2,t:'2C · Elevated 15 m',d:'Alt 2C — 15 m above the water, overview of the marina',src:'alt/ALT_M3',xy:[-260.7,338.1],h:250},
+ {k:'3a',n:3,t:'3A · Pool walkway',d:'Alt 3A — on the walkway crossing the pool',src:'alt/ALT_H1',xy:[482,240],h:215},
+ {k:'3b',n:3,t:'3B · In the pool',d:'Alt 3B — in the pool, 1.5 m above the water',src:'alt/ALT_H2',xy:[470,222],h:210},
+ {k:'3c',n:3,t:'3C · Walkway, water level',d:'Alt 3C — walkway at water level',src:'alt/ALT_H3',xy:[482,240],h:215}];
+L.push({id:'alternatives',name:'5 · Camera alternatives',desc:'Alternative camera positions for review · grey model, real water',items:ALT_ITEMS.map(x=>({...x,res:['_2k.jpg','_8k.jpg']}))});
 const MAXT0=(()=>{try{const g=document.createElement('canvas').getContext('webgl');return g?g.getParameter(g.MAX_TEXTURE_SIZE):4096}catch(e){return 4096}})();
 const MOBILE=matchMedia('(max-width:900px)').matches||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 L.forEach(l=>l.items.forEach(it=>{[it.x,it.y]=MAP(it.xy);it.res=MOBILE?['_1k.jpg','_4k.jpg'].concat(it.res.includes('_8k.jpg')&&MAXT0>=8192?['_8k.jpg']:[]):['_1k.jpg',...it.res]}));
@@ -117,7 +128,7 @@ function prefetch(){if(MOBILE)return;L[lv].items.forEach(it=>{if(it!==cur)want(i
 
 // ---------- UI
 const NS='http://www.w3.org/2000/svg',levels=document.getElementById('levels'),btns=document.getElementById('btns'),pts=document.getElementById('pts'),lg=document.getElementById('lg'),ghosts=document.getElementById('ghosts');
-const SHORT=['1 · Brief','2 · Cameras','3 · References','4 · Previews'];const narrow=matchMedia('(max-width:700px)');
+const SHORT=['1 · Brief','2 · Cameras','3 · References','4 · Previews','5 · Alternatives'];const narrow=matchMedia('(max-width:700px)');
 L.forEach((l,i)=>{const b=document.createElement('button');b.textContent=narrow.matches?SHORT[i]:l.name;b.onclick=()=>go(i,cur?cur.k:null);levels.appendChild(b)});
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
 function buildLevel(){const l=L[lv];[...levels.children].forEach((b,i)=>b.classList.toggle('on',i==lv));document.getElementById('lvdesc').textContent=l.desc;
@@ -137,7 +148,7 @@ function go(i,k){const l=L[i];const it=l.items.find(x=>x.k===k)||l.items.find(x=
 function show(i,it){if(lv!==i||!pts.children.length){lv=i;buildLevel()}if(MOBILE)for(const k in T)if(k!==it.src&&T[k].l>0){gl.deleteTexture(T[k].t);delete T[k]}cur=it;yaw=0;pitch=0;fov=95;placeMarkers();
  document.getElementById('mapt').textContent=it.t.split('·')[1].trim();ld.style.display=lvlOf(it)>=0?'none':'block';
  want(it,0).then(()=>{if(cur===it){ld.style.display='none';draw()}const top=topRes(it);let p=Promise.resolve();for(let r=1;r<=top;r++)p=p.then(()=>cur===it?want(it,r):null);return p}).then(prefetch)}
-function fromHash(){const m=location.hash.slice(1).match(/^(brief|proposal|reference|preview)-(\w+)$/);if(!m){show(0,L[0].items[0]);return}
+function fromHash(){const m=location.hash.slice(1).match(/^(brief|proposal|reference|preview|alternatives)-(\w+)$/);if(!m){show(0,L[0].items[0]);return}
  const i=L.findIndex(l=>l.id===m[1]);const it=L[i].items.find(x=>x.k===m[2])||L[i].items[0];show(i,it)}
 addEventListener('hashchange',fromHash);
 const dirs=['N','NE','E','SE','S','SW','W','NW'];
@@ -158,7 +169,7 @@ cv.addEventListener('wheel',e=>{e.preventDefault();fov=Math.max(30,Math.min(120,
 addEventListener('keydown',e=>{const it=L[lv].items,i=it.indexOf(cur);if(e.key=='ArrowRight'&&e.shiftKey||e.key=='PageDown'||e.key==']')go(lv,it[(i+1)%it.length].k);
  if(e.key=='ArrowLeft'&&e.shiftKey||e.key=='PageUp'||e.key=='[')go(lv,it[(i-1+it.length)%it.length].k);
  if(!e.shiftKey&&e.key=='ArrowLeft'){yaw-=.1;draw()}if(!e.shiftKey&&e.key=='ArrowRight'){yaw+=.1;draw()}
- if(e.key>='1'&&e.key<='4')go(+e.key-1,cur?cur.k:null);if(e.key.toLowerCase()=='r'){yaw=0;pitch=0;fov=95;draw()}});
+ if(e.key>='1'&&e.key<='5')go(+e.key-1,cur?cur.k:null);if(e.key.toLowerCase()=='r'){yaw=0;pitch=0;fov=95;draw()}});
 const hb=document.getElementById('hd');if(CAN16)hb.style.display='';
 hb.onclick=()=>{hd=!hd;hb.classList.toggle('on',hd);if(hd&&cur&&cur.res.includes('_16k.jpg'))want(cur,cur.res.length-1)};
 document.getElementById('fs').onclick=()=>{try{const d=document.documentElement;(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen()).catch(()=>{})}catch(e){}};
