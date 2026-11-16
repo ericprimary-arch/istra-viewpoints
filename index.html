@@ -85,8 +85,9 @@ const L=[
  {id:'reference',name:'3 · Reference previews',desc:'AI reference previews from the proposed cameras · mood only',items:PROP.map(p=>({...p,d:p.d+' · reference preview',src:RSRC[p.k],res:R4}))},
  {id:'preview',name:'4 · Panorama previews',desc:'Work-in-progress panorama previews · materials, planting, light',items:[
   {k:'1',n:1,t:'1 · Cottage & wellness hotel',d:'Panorama preview 1 — cottage and wellness hotel',src:'wip/W1',res:['_2k.jpg','_8k.jpg'],xy:[-380,1046],h:268}]}];
+const MAXT0=(()=>{try{const g=document.createElement('canvas').getContext('webgl');return g?g.getParameter(g.MAX_TEXTURE_SIZE):4096}catch(e){return 4096}})();
 const MOBILE=matchMedia('(max-width:900px)').matches||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-L.forEach(l=>l.items.forEach(it=>{[it.x,it.y]=MAP(it.xy);it.res=MOBILE?['_1k.jpg','_4k.jpg']:['_1k.jpg',...it.res]}));
+L.forEach(l=>l.items.forEach(it=>{[it.x,it.y]=MAP(it.xy);it.res=MOBILE?['_1k.jpg','_4k.jpg'].concat(it.res.includes('_8k.jpg')&&MAXT0>=8192?['_8k.jpg']:[]):['_1k.jpg',...it.res]}));
 
 // ---------- WebGL panorama
 const cv=document.getElementById('c'),gl=cv.getContext('webgl',{antialias:false});
@@ -96,7 +97,7 @@ function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShade
 const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
 gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
 const lp=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-const U=n=>gl.getUniformLocation(pr,n);const MAXT=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+const U=n=>gl.getUniformLocation(pr,n);const ANI=gl.getExtension('EXT_texture_filter_anisotropic')||gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');const ANIMAX=ANI?Math.min(16,gl.getParameter(ANI.MAX_TEXTURE_MAX_ANISOTROPY_EXT)):1;const MAXT=gl.getParameter(gl.MAX_TEXTURE_SIZE);
 const CAN16=MAXT>=16384&&!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 let yaw=0,pitch=0,fov=95,lv=0,cur=null,hd=false;const T={},pending={};
 const ld=document.getElementById('load');
@@ -104,7 +105,8 @@ const RN=r=>({'_1k.jpg':'1K preview','_2k.jpg':'2K','_4k.jpg':'4K','_8k.jpg':'8K
 function fetchImg(url){return new Promise((res,rej)=>{const im=new Image();im.decoding='async';im.onload=()=>{(im.decode?im.decode():Promise.resolve()).then(()=>res(im),()=>res(im))};im.onerror=rej;im.src=url})}
 function upload(it,im,l){let s=im;if(im.width>MAXT){const c=document.createElement('canvas');c.width=MAXT;c.height=MAXT/2;c.getContext('2d').drawImage(im,0,0,MAXT,MAXT/2);s=c}
  const e=T[it.src]||(T[it.src]={t:gl.createTexture(),l:-1});gl.bindTexture(gl.TEXTURE_2D,e.t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,s);
- gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+ const pot=v=>(v&(v-1))==0;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+ if(pot(s.width)&&pot(s.height)){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);if(ANI)gl.texParameterf(gl.TEXTURE_2D,ANI.TEXTURE_MAX_ANISOTROPY_EXT,ANIMAX)}else gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
  e.l=l;if(it===cur)draw()}
 const lvlOf=it=>(T[it.src]?T[it.src].l:-1);
 function want(it,l){if(l>=it.res.length||lvlOf(it)>=l)return Promise.resolve();const k=it.src+'|'+l;if(pending[k])return pending[k];
@@ -132,7 +134,7 @@ function placeMarkers(){const l=L[lv];[...pts.children].forEach(g=>{const n=+g.d
  [...btns.children,...lg.children].forEach(b=>b.classList&&b.classList.toggle('on',!!cur&&b.dataset.k===cur.k))}
 document.getElementById('maphd').onclick=()=>document.getElementById('map').classList.toggle('min');
 function go(i,k){const l=L[i];const it=l.items.find(x=>x.k===k)||l.items.find(x=>k&&x.n==parseInt(k))||l.items[0];const h='#'+l.id+'-'+it.k;if(location.hash!==h)location.hash=h;else show(i,it)}
-function show(i,it){if(lv!==i||!pts.children.length){lv=i;buildLevel()}cur=it;yaw=0;pitch=0;fov=95;placeMarkers();
+function show(i,it){if(lv!==i||!pts.children.length){lv=i;buildLevel()}if(MOBILE)for(const k in T)if(k!==it.src&&T[k].l>0){gl.deleteTexture(T[k].t);delete T[k]}cur=it;yaw=0;pitch=0;fov=95;placeMarkers();
  document.getElementById('mapt').textContent=it.t.split('·')[1].trim();ld.style.display=lvlOf(it)>=0?'none':'block';
  want(it,0).then(()=>{if(cur===it){ld.style.display='none';draw()}const top=topRes(it);let p=Promise.resolve();for(let r=1;r<=top;r++)p=p.then(()=>cur===it?want(it,r):null);return p}).then(prefetch)}
 function fromHash(){const m=location.hash.slice(1).match(/^(brief|proposal|reference|preview)-(\w+)$/);if(!m){show(0,L[0].items[0]);return}
