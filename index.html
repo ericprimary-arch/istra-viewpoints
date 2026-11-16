@@ -94,7 +94,16 @@ const ALT_ITEMS=[
  {k:'2c',n:2,t:'2C · Elevated 15 m',d:'Alt 2C — 15 m above the water, overview of the marina',src:'alt/ALT_M3',xy:[-260.7,338.1],h:250},
  {k:'3a',n:3,t:'3A · Pool walkway',d:'Alt 3A — on the walkway crossing the pool',src:'alt/ALT_H1',xy:[482,240],h:215},
  {k:'3b',n:3,t:'3B · In the pool',d:'Alt 3B — in the pool, 1.5 m above the water',src:'alt/ALT_H2',xy:[470,222],h:210},
- {k:'3c',n:3,t:'3C · Walkway, water level',d:'Alt 3C — walkway at water level',src:'alt/ALT_H3',xy:[482,240],h:215}];
+ {k:'3c',n:3,t:'3C · Walkway, water level',d:'Alt 3C — walkway at water level',src:'alt/ALT_H3',xy:[482,240],h:215},
+ {k:'1d',n:1,t:'1D · Villas, 34 m overview',d:'Alt 1D — 34 m above the ground between the cottage and the hotel, overall structure',src:'alt/ALT_V7',xy:[-410,1060],h:280},
+ {k:'1e',n:1,t:'1E · Villas, past the cottage, 8 m',d:'Alt 1E — south-east of the cottage, looking along it to the hotel, 8 m',src:'alt/ALT_V5',xy:[-372,996],h:320},
+ {k:'1f',n:1,t:'1F · In front of the hotel, 6 m',d:'Alt 1F — in front of the hotel facade, cottage to the side, 6 m',src:'alt/ALT_V8',xy:[-415,1110],h:250},
+ {k:'2d',n:2,t:'2D · Yacht deck, east corner',d:'Alt 2D — yacht upper deck in the east corner of the basin',src:'alt/ALT_M4',xy:[-205,318],h:280},
+ {k:'2e',n:2,t:'2E · Yacht deck, south corner',d:'Alt 2E — yacht upper deck in the south corner of the basin',src:'alt/ALT_M5',xy:[-250,265],h:320},
+ {k:'2f',n:2,t:'2F · Elevated 25 m',d:'Alt 2F — 25 m above the basin centre, marina overview',src:'alt/ALT_M6',xy:[-269,333],h:250},
+ {k:'3d',n:3,t:'3D · In the pool, near hotel',d:'Alt 3D — in the pool closer to the hotel, 1.5 m above the water',src:'alt/ALT_H4',xy:[462,212],h:205},
+ {k:'3e',n:3,t:'3E · Elevated 12 m over pool',d:'Alt 3E — 12 m above the north edge of the pool',src:'alt/ALT_H5',xy:[482,262],h:205},
+ {k:'3f',n:3,t:'3F · In the pool, side view',d:'Alt 3F — in the pool, side angle to the hotel',src:'alt/ALT_H6',xy:[500,225],h:240}].sort((a,b)=>a.k.localeCompare(b.k));
 L.push({id:'alternatives',name:'5 · Camera alternatives',desc:'Alternative camera positions for review · grey model, real water',items:ALT_ITEMS.map(x=>({...x,res:['_2k.jpg','_8k.jpg']}))});
 const MAXT0=(()=>{try{const g=document.createElement('canvas').getContext('webgl');return g?g.getParameter(g.MAX_TEXTURE_SIZE):4096}catch(e){return 4096}})();
 const MOBILE=matchMedia('(max-width:900px)').matches||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
